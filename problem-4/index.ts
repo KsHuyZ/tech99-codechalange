@@ -1,5 +1,5 @@
 // complexity: O(n)
-function sumToNForLoop(n) {
+function sumToNForLoop(n: number): number {
   let sum = 0;
   Array.from({ length: n }, (_, i) => i + 1).forEach((num) => {
     sum += num;
@@ -8,13 +8,13 @@ function sumToNForLoop(n) {
 }
 
 // complexity: O(n)
-function sumToNRecursive(n) {
+function sumToNRecursive(n: number): number {
   if (n <= 1) return n;
   return n + sumToNRecursive(n - 1);
 }
 
 // complexity: O(1)
-function sumToNFormula(n) {
+function sumToNFormula(n: number): number {
   return (n * (n + 1)) / 2;
 }
 

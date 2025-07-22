@@ -65,7 +65,6 @@ A simple Express.js backend in TypeScript for managing students, using MongoDB f
   "name": "John Doe",
   "age": 20,
   "email": "john@example.com",
-  "enrolled": true
 }
 ```
 

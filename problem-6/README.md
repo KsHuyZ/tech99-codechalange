@@ -2,21 +2,37 @@
 
 ## Overview
 
-This module provides a backend API for a website scoreboard that displays the top 10 users' scores and supports live updates. It securely handles score updates triggered by user actions and prevents unauthorized score manipulation.
+This module provides backend API endpoints and real-time capabilities to support a live-updating scoreboard for a website. The scoreboard displays the top 10 users by score, and updates in real time as users perform actions that increase their scores.
 
-## Features
+---
 
-- Retrieve the top 10 users by score
-- Live update support for the scoreboard (WebSocket only)
-- Securely update user scores upon valid actions
-- Prevent unauthorized score increases
+## Functional Requirements
+
+1. **Scoreboard Display**
+
+   - Endpoint to fetch the top 10 users and their scores.
+   - Scores are sorted in descending order.
+
+2. **Score Update**
+
+   - Endpoint to increment a user's score when they complete an action.
+   - Only authenticated and authorized users can update their own scores.
+
+3. **Live Updates**
+
+   - Real-time push mechanism (e.g., WebSockets) to broadcast scoreboard changes to all connected clients.
+
+4. **Security**
+   - Prevent unauthorized score updates.
+   - Ensure users can only increment their own scores.
+
+---
 
 ## API Endpoints
 
-### 1. Get Top 10 Scores
+### 1. `GET /api/scoreboard/top`
 
-- **Endpoint:** `GET /api/scoreboard/top`
-- **Description:** Returns the top 10 users with the highest scores.
+- **Description:** Returns the top 10 users and their scores.
 - **Response:**
   ```json
   [
@@ -25,76 +41,68 @@ This module provides a backend API for a website scoreboard that displays the to
   ]
   ```
 
-### 2. Update User Score
+### 2. `POST /api/scoreboard/increment`
 
-- **Endpoint:** `POST /api/scoreboard/update`
-- **Description:** Increases the score for the authenticated user after a valid action.
-- **Request Body:**
-  ```json
-  { "actionId": "string" }
-  ```
-- **Authentication:** Required (JWT or session-based)
+- **Description:** Increments the authenticated user's score by 1 (or configurable value).
+- **Request Body:** _Empty_ (user is identified via authentication token)
+- **Authentication:** Required (JWT or session)
 - **Response:**
   ```json
   { "success": true, "newScore": number }
   ```
 
-### 3. Live Scoreboard Updates (WebSocket Only)
+### 3. **WebSocket/Server-Sent Events**
 
-- **Endpoint:** `WS /ws/scoreboard`
-- **Description:** Establishes a WebSocket connection for real-time scoreboard updates.
-- **Response:** Stream of top 10 scores as they change, sent as WebSocket messages.
+- **Description:** Clients subscribe to real-time scoreboard updates.
+- **Event:** `scoreboardUpdate`
+- **Payload:** Same as `GET /api/scoreboard/top` response.
 
-## Security Considerations
-
-- **Authentication:** All score update requests must be authenticated (JWT/session/cookie).
-- **Authorization:** Ensure the user can only update their own score.
-- **Action Validation:** Server must validate that the action is legitimate (e.g., not replayed or forged).
-- **Rate Limiting:** Prevent abuse by limiting the frequency of score updates per user.
-- **Audit Logging:** Log suspicious or failed update attempts for monitoring.
-
-## Data Model (Example)
-
-```json
-{
-  "userId": "string",
-  "username": "string",
-  "score": number
-}
-```
+---
 
 ## Flow of Execution
 
-1. User completes an action on the website.
-2. Website sends an authenticated API request to update the score.
-3. Server validates the action and user, updates the score in the database.
-4. Server broadcasts the updated top 10 scores to all connected clients via WebSocket.
-5. Clients update the scoreboard in real time.
-
+```mermaid
 sequenceDiagram
-  participant User
-  participant Website
-  participant API_Server
-  participant DB
-  participant Clients
+    participant User
+    participant Frontend
+    participant Backend
+    participant DB
 
-  User->>Website: Complete Action
-  Website->>API_Server: POST /api/scoreboard/update (auth)
-  API_Server->>DB: Validate & Update Score
-  API_Server-->>Website: Response (new score)
-  API_Server-->>Clients: Broadcast updated top 10 (WebSocket)
-  Clients->>Website: Update scoreboard UI
+    User->>Frontend: Completes action
+    Frontend->>Backend: POST /api/scoreboard/increment (with auth)
+    Backend->>Backend: Validate authentication & authorization
+    Backend->>DB: Increment user's score
+    DB-->>Backend: Updated score
+    Backend->>Frontend: Respond with new score
+    Backend->>Frontend: (WebSocket) Push updated top 10 scoreboard
+    Backend->>All Frontends: (WebSocket) Broadcast updated scoreboard
+```
 
-## Improvements & Suggestions
+---
 
-- Use Redis or in-memory cache for fast leaderboard queries.
-- Consider using a message queue (e.g., RabbitMQ) for scaling live updates.
-- Implement user notification for significant score changes.
-- Add admin endpoints for monitoring and managing suspicious activity.
-- Use HTTPS and secure cookies for all communications.
+## Security Considerations
 
-## Implementation Notes
+- **Authentication:** All score update requests must be authenticated (e.g., JWT, OAuth2, session).
+- **Authorization:** Users can only increment their own scores.
+- **Rate Limiting:** Prevent abuse by limiting how often a user can increment their score.
+- **Input Validation:** Ensure no direct score manipulation (e.g., no arbitrary score values in requests).
 
-- Use WebSocket for bi-directional, real-time communication.
-- Use optimistic concurrency control to avoid race conditions on score updates.
-- Ensure scalability for high-traffic scenarios.
+---
+
+## Comments & Suggestions for Improvement
+
+- **Audit Logging:** Log all score changes for monitoring and rollback in case of abuse.
+- **Leaderboard Pagination:** Consider supporting pagination for larger leaderboards.
+- **Score Decay:** Optionally, implement score decay or time-based leaderboards.
+- **Testing:** Include unit and integration tests for all endpoints and real-time features.
+- **Monitoring:** Add metrics for API usage, error rates, and suspicious activity.
+- **Extensibility:** Design the module to allow for future features (e.g., badges, achievements).
+
+---
+
+## Example Technologies
+
+- **Backend:** Node.js (Express, Fastify), Python (FastAPI), Go, etc.
+- **Database:** PostgreSQL, MongoDB, Redis (for fast leaderboard queries).
+- **Real-time:** WebSockets (Socket.IO, ws), Server-Sent Events.
+- **Authentication:** JWT, OAuth2, session-based.
