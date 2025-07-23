@@ -97,6 +97,7 @@ sequenceDiagram
 - **Testing:** Include unit and integration tests for all endpoints and real-time features.
 - **Monitoring:** Add metrics for API usage, error rates, and suspicious activity.
 - **Extensibility:** Design the module to allow for future features (e.g., badges, achievements).
+- **Caching (Redis):** Add Redis caching to reduce database load, especially for frequently accessed data like leaderboard queries.
 
 ---
 
